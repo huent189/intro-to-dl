@@ -11,7 +11,7 @@ from torch.autograd import Variable
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data',
                     help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/base_model',
+parser.add_argument('--model_dir', default='experiments',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model
-    model = net.LogisticRegression(params.input_dim, params.output_dim)
+    model = net.LogisticRegression()
     if params.cuda:
         model = model.cuda()
     loss_fn = net.loss_fn

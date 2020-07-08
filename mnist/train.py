@@ -6,7 +6,6 @@ import logging
 import torch
 from torch.autograd import Variable
 from tqdm import tqdm
-import model.data_loader
 from model.data_loader import fetch_dataloader
 from model import net
 from torch import optim
@@ -14,7 +13,7 @@ from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-dir', default='data',help="Directory containing the dataset")
-parser.add_argument('--model-dir',  default='experiments/base_model', help="Directory containing params.json")
+parser.add_argument('--model-dir',  default='experiments', help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before training")
 
@@ -132,7 +131,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.LogisticRegression(params.input_dim, params.output_dim).cuda() if params.cuda else net.LogisticRegression(params.input_dim, params.output_dim)
+    model = net.LogisticRegression().cuda() if params.cuda else net.LogisticRegression()
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
