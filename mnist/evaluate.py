@@ -1,4 +1,12 @@
 import argparse
+import logging
+import utils
+import os
+import numpy as np
+from model import net
+from model.data_loader import fetch_dataloader
+import torch
+from torch.autograd import Variable
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data',
@@ -17,18 +25,18 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
 
     for X, y in dataloader:
         if(params.cuda):
-                #https://discuss.pytorch.org/t/should-we-set-non-blocking-to-true/38234/8
-                X, y = X.cuda(non_blocking=True), y.cuda(non_blocking=True)
-            # convert to torch Variables
-            X, y = Variable(X), Variable(y)
-            # compute model output and loss
-            y_hat = model(X)
-            loss = loss_fcn(y_hat, y)
-            y_hat = y_hat.data.cpu().numpy()
-            y = y.data.cpu().numpy()
-            summary_batch = {metric: metrics[metric](y_hat, y) for metric in metrics}
-            summary_batch['loss'] = loss.item()
-            summ.append(summary_batch)
+            #https://discuss.pytorch.org/t/should-we-set-non-blocking-to-true/38234/8
+            X, y = X.cuda(non_blocking=True), y.cuda(non_blocking=True)
+        # convert to torch Variables
+        X, y = Variable(X), Variable(y)
+        # compute model output and loss
+        y_hat = model(X)
+        loss = loss_fn(y_hat, y)
+        y_hat = y_hat.data.cpu().numpy()
+        y = y.data.cpu().numpy()
+        summary_batch = {metric: metrics[metric](y_hat, y) for metric in metrics}
+        summary_batch['loss'] = loss.item()
+        summ.append(summary_batch)
     metrics_mean = {metric: np.mean([x[metric]
                                      for x in summ]) for metric in summ[0]}
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v)
@@ -62,14 +70,15 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, params)
+    dataloaders = fetch_dataloader(['test'], params)
     test_dl = dataloaders['test']
 
     logging.info("- done.")
 
     # Define the model
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
-
+    model = net.LogisticRegression(params.input_dim, params.output_dim)
+    if params.cuda:
+        model = model.cuda()
     loss_fn = net.loss_fn
     metrics = net.metrics
 

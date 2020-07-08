@@ -1,8 +1,15 @@
 import argparse
 import utils
+import numpy as np
+import os
+import logging
 import torch
 from torch.autograd import Variable
 from tqdm import tqdm
+import model.data_loader
+from model.data_loader import fetch_dataloader
+from model import net
+from torch import optim
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
@@ -18,7 +25,7 @@ def train(model, optimizer, loss_fcn, dataloader, metrics, params):
     loss_avg = utils.RunningAverage()
     # Use tqdm for progress bar
     with tqdm(total=len(dataloader)) as t:
-        for (i, (X, y) in enumerate(dataloader)):
+        for i, (X, y) in enumerate(dataloader):
             if(params.cuda):
                 #https://discuss.pytorch.org/t/should-we-set-non-blocking-to-true/38234/8
                 X, y = X.cuda(non_blocking=True), y.cuda(non_blocking=True)
@@ -117,15 +124,15 @@ if __name__ == '__main__':
     logging.info("Loading the datasets...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(
-        ['train', 'val'], args.data_dir, params)
+    dataloaders = fetch_dataloader(
+        ['train', 'val'], params)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
 
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    model = net.LogisticRegression(params.input_dim, params.output_dim).cuda() if params.cuda else net.LogisticRegression(params.input_dim, params.output_dim)
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
